@@ -20,7 +20,7 @@ import testgallery.SceneWorld;
  */
 public class HitChecks implements FabricClientGameTest {
     private static final String HURT = "minecraft:entity.player.hurt";
-    private static final String DING = "minecraft:block.note_block.bell";
+    private static final String DING = "minecraft:item.armor.equip_iron";
     private static final String PROBE = "minecraft:ui.button.click";
 
     @Override
@@ -72,6 +72,19 @@ public class HitChecks implements FabricClientGameTest {
                 noDing.expect(!noDing.sounds.contains(HURT), "the light hit should still not play the hurt sound");
             } finally {
                 Settings.ding = true;
+            }
+
+            // Custom sound: the ding plays the typed ID; an unknown one falls back to the default.
+            try {
+                Settings.sound = "minecraft:block.note_block.bell";
+                Hit custom = hit(ctx, scene, heard, "honestdamage:armor_save", "damage @p 2 minecraft:mob_attack");
+                custom.expect(custom.sounds.contains("minecraft:block.note_block.bell"), "the custom ding sound should play");
+                custom.expect(!custom.sounds.contains(DING), "the custom sound replaces the default");
+                Settings.sound = "minecraft:not.a.sound";
+                Hit typo = hit(ctx, scene, heard, "honestdamage:armor_save", "damage @p 2 minecraft:mob_attack");
+                typo.expect(typo.sounds.contains(DING), "an unknown sound ID should fall back to the default ding");
+            } finally {
+                Settings.sound = Settings.DEFAULT_SOUND;
             }
         }
     }

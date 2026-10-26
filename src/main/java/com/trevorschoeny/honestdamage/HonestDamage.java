@@ -3,7 +3,8 @@ package com.trevorschoeny.honestdamage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.sounds.SoundEvents;
+import net.minecraft.resources.Identifier;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -141,7 +142,14 @@ public final class HonestDamage {
     private static void ding() {
         if (!Settings.ding) return;
         Minecraft.getInstance().getSoundManager().play(
-                SimpleSoundInstance.forUI(SoundEvents.NOTE_BLOCK_BELL.value(), 0.8F, 0.35F));
+                SimpleSoundInstance.forUI(SoundEvent.createVariableRangeEvent(dingSound()), 1F, 0.6F));
+    }
+
+    /** The player's chosen sound, or the default when it's blank, malformed, or not a sound the game knows (a typo shouldn't mute the ding). */
+    static Identifier dingSound() {
+        Identifier id = Identifier.tryParse(Settings.sound.trim());
+        return id != null && Minecraft.getInstance().getSoundManager().getSoundEvent(id) != null
+                ? id : Identifier.parse(Settings.DEFAULT_SOUND);
     }
 
     private HonestDamage() {}
