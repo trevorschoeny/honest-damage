@@ -131,6 +131,7 @@ public final class HonestDamage {
     }
 
     private static void ding() {
+        if (!Settings.ding) return;
         Minecraft.getInstance().getSoundManager().play(
                 SimpleSoundInstance.forUI(SoundEvents.NOTE_BLOCK_BELL.value(), 1.6F, 0.5F));
     }

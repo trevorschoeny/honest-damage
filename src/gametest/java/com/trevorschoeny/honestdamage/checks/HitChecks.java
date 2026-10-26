@@ -2,6 +2,7 @@ package com.trevorschoeny.honestdamage.checks;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.trevorschoeny.honestdamage.Settings;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
@@ -61,6 +62,17 @@ public class HitChecks implements FabricClientGameTest {
             fall.expect(fall.maxHurtTime == 0, "the cushioned fall should not flash");
             fall.expect(!fall.sounds.contains(HURT), "the cushioned fall should not play the hurt sound");
             fall.expect(fall.sounds.contains(DING), "the fall took health without moving a heart, so a ding");
+
+            // Setting off: the same light hit as "armor_save", but silent instead of a ding.
+            Settings.ding = false;
+            try {
+                Hit noDing = hit(ctx, scene, heard, "honestdamage:armor_save", "damage @p 2 minecraft:mob_attack");
+                noDing.expect(noDing.health < 20, "the light hit should still land (health below 20)");
+                noDing.expect(!noDing.sounds.contains(DING), "the ding setting is off, so no ding");
+                noDing.expect(!noDing.sounds.contains(HURT), "the light hit should still not play the hurt sound");
+            } finally {
+                Settings.ding = true;
+            }
         }
     }
 
