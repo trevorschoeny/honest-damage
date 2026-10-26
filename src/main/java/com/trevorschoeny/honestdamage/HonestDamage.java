@@ -43,6 +43,7 @@ public final class HonestDamage {
         final LocalPlayer player;
         final DamageSource source;
         final float health, absorption;
+        float lowestTotal;   // the least health+absorption seen while held, in case regen outraces the window
         Float hurtDir;   // set if the server sent which way the shake tilts
         int ticksLeft = WINDOW_TICKS;
 
@@ -51,6 +52,7 @@ public final class HonestDamage {
             this.source = source;
             this.health = player.getHealth();
             this.absorption = player.getAbsorptionAmount();
+            this.lowestTotal = this.health + this.absorption;
         }
     }
 
@@ -103,14 +105,20 @@ public final class HonestDamage {
         Pending p = pending;
         if (p == null) return;
         if (p.player != player) { pending = null; return; }   // respawned or rejoined: the hit is moot
-        if (heartsMoved(p.health, p.absorption, player.getHealth(), player.getAbsorptionAmount())) {
+        float health = player.getHealth(), absorption = player.getAbsorptionAmount();
+        p.lowestTotal = Math.min(p.lowestTotal, health + absorption);
+        if (heartsMoved(p.health, p.absorption, health, absorption)) {
             settle(p, false);
         } else if (--p.ticksLeft <= 0) {
             settle(p, true);
         }
     }
 
-    /** Ends the held hit: replays its cues, or drops them and maybe dings. */
+    /**
+     * Ends the held hit: replays its cues, or drops them and maybe dings. A ding is judged
+     * against the lowest health+absorption seen while held, not the value at this instant:
+     * regeneration can heal a tiny hit back within the window, and it still happened.
+     */
     private static void settle(Pending p, boolean silenced) {
         pending = null;
         LocalPlayer player = p.player;
@@ -123,7 +131,7 @@ public final class HonestDamage {
             } finally {
                 replaying = false;
             }
-        } else if (healthLost(p.health, p.absorption, health, absorption)) {
+        } else if (p.lowestTotal < p.health + p.absorption) {
             // The hit landed but no heart moved. A shield block sends no damage
             // event, so it never reaches here.
             ding();
