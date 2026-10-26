@@ -31,7 +31,7 @@ public final class HonestDamage {
      * tick; the rest is slack for a laggy connection. Every real hit is decided as soon
      * as the hearts move, so this only delays the ding.
      */
-    // ponytail: fixed window; a packet later than this is judged in allowHealthFlash (flash or ding, no hurt sound).
+    // Fixed window; a packet later than this is judged in allowHealthFlash (flash or ding, no hurt sound).
     static final int WINDOW_TICKS = 4;
 
     /** The hit waiting for a verdict, or null. One at a time: a second hit settles the first. */
