@@ -12,9 +12,6 @@
   },
   "license": "MIT",
   "environment": "client",
-  "entrypoints": {
-    "modmenu": ["com.trevorschoeny.honestdamage.SettingsScreen"]
-  },
   "mixins": [
     "honestdamage.mixins.json"
   ],

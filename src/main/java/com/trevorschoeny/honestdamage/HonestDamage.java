@@ -71,7 +71,7 @@ public final class HonestDamage {
 
     /** Damage event for any living entity. True: it's the local player's, held until decided. */
     public static boolean holdDamageEvent(LivingEntity entity, DamageSource source) {
-        if (replaying || !Settings.silencing || !(entity instanceof LocalPlayer player)) return false;
+        if (replaying || !(entity instanceof LocalPlayer player)) return false;
         if (pending != null) settle(pending, true);
         pending = new Pending(player, source);
         return true;
@@ -91,7 +91,6 @@ public final class HonestDamage {
      * window), the drop is judged here: same rule, cues if a heart moved, else a ding.
      */
     public static boolean allowHealthFlash(LocalPlayer player, float healthBefore, float healthAfter) {
-        if (!Settings.silencing) return true;
         if (pending != null && pending.player == player) return false;
         float absorption = player.getAbsorptionAmount();
         if (heartsMoved(healthBefore, absorption, healthAfter, absorption)) return true;
@@ -132,7 +131,7 @@ public final class HonestDamage {
     }
 
     private static void ding() {
-        if (Settings.ding) Minecraft.getInstance().getSoundManager().play(
+        Minecraft.getInstance().getSoundManager().play(
                 SimpleSoundInstance.forUI(SoundEvents.NOTE_BLOCK_BELL.value(), 1.6F, 0.5F));
     }
 

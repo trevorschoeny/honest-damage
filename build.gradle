@@ -1,7 +1,6 @@
 // Honest Damage: the hurt sound, red flash and screen shake play only when a hit visibly
 // drops the hearts, and a small ding plays for a hit too small to move one. Client-only (environment
-// "client"), mixins only, no Kits. Settings are a YACL screen, bundled (Jar-in-Jar);
-// YACL brings the Fabric API requirement with it.
+// "client"), mixins only, no Kits, no settings screen — the behavior is fixed.
 //
 // Build: `./gradlew :honest-damage:build` from the workspace root (the composite
 // build in ~/Projects/Minecraft/Trevlar Mods). Test scene:
@@ -27,10 +26,6 @@ java {
 
 repositories {
     maven { url 'https://maven.fabricmc.net/' }
-    // ModMenu, from Terraformers' Maven.
-    maven { url 'https://maven.terraformersmc.com/releases/' }
-    // YACL's 26.x builds are only on this Maven repository.
-    maven { url 'https://api.modrinth.com/maven' }
 }
 
 dependencies {
@@ -38,17 +33,9 @@ dependencies {
     // the standard java configurations.
     minecraft "com.mojang:minecraft:${property('minecraft_version')}"
     implementation "net.fabricmc:fabric-loader:${property('loader_version')}"
-    // The mod calls nothing in Fabric API; YACL needs it, and so do the gametests.
+    // The mod itself calls nothing in Fabric API; kept only because the client
+    // gametests do (FabricClientGameTest).
     implementation "net.fabricmc.fabric-api:fabric-api:${property('fabric_version')}"
-
-    // ModMenu opens the settings screen from the mods list. Soft dep at runtime.
-    compileOnly "com.terraformersmc:modmenu:21.0.0"
-    localRuntime "com.terraformersmc:modmenu:21.0.0"
-
-    // YACL, the settings screen, is bundled into the jar (Jar-in-Jar), so a player
-    // who installs Honest Damage alone still has it.
-    implementation "maven.modrinth:yacl:3.9.7+26.3-fabric"
-    include        "maven.modrinth:yacl:3.9.7+26.3-fabric"
 }
 
 loom {
