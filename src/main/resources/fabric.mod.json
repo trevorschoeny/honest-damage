@@ -3,7 +3,7 @@
   "id": "honestdamage",
   "version": "${version}",
   "name": "Honest Damage",
-  "description": "The hurt sound, red flash and screen shake play only when a hit actually hurts you. When your armor takes the whole hit, you hear a small ding instead.",
+  "description": "The hurt sound, red flash and screen shake play only when a hit visibly drops your hearts. A hit too small to move a heart plays a small ding instead.",
   "authors": [
     "trevorschoeny"
   ],
@@ -12,6 +12,9 @@
   },
   "license": "MIT",
   "environment": "client",
+  "entrypoints": {
+    "modmenu": ["com.trevorschoeny.honestdamage.SettingsScreen"]
+  },
   "mixins": [
     "honestdamage.mixins.json"
   ],

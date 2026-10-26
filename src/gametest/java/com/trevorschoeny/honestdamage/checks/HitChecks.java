@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.sounds.SoundEvents;
 import testgallery.SceneWorld;
 
 /**
@@ -18,6 +20,7 @@ import testgallery.SceneWorld;
 public class HitChecks implements FabricClientGameTest {
     private static final String HURT = "minecraft:entity.player.hurt";
     private static final String DING = "minecraft:block.note_block.bell";
+    private static final String PROBE = "minecraft:ui.button.click";
 
     @Override
     public void runTest(ClientGameTestContext ctx) {
@@ -25,9 +28,10 @@ public class HitChecks implements FabricClientGameTest {
         try (SceneWorld.Opened scene = SceneWorld.open(ctx, "honest-damage", "core")) {
             ctx.runOnClient(c -> c.getSoundManager().addListener(
                     (sound, events, range) -> heard.add(sound.getIdentifier().toString())));
+            soundReady(ctx, heard);
 
-            // Station "honestdamage:armor_save": 2 damage, armor leaves ~0.16 of it. The hearts
-            // don't move, so no cues; the armor lost durability, so a ding.
+            // Station "honestdamage:armor_save": 2 damage, armor leaves ~0.16 of it. Health went
+            // down but no heart moved, so no cues and a ding.
             Hit save = hit(ctx, scene, heard, "honestdamage:armor_save", "damage @p 2 minecraft:mob_attack");
             save.expect(save.health < 20, "the light hit should land (health below 20)");
             save.expect(save.maxHurtTime == 0, "the light hit should not flash");
@@ -40,6 +44,15 @@ public class HitChecks implements FabricClientGameTest {
             real.expect(real.sounds.contains(HURT), "the heavy hit should play the hurt sound");
             real.expect(!real.sounds.contains(DING), "the heavy hit should not ding");
 
+            // Station "honestdamage:immune": Resistance V takes the whole hit. The damage event
+            // still arrives, but health doesn't change, so nothing at all.
+            Hit immune = hit(ctx, scene, heard, "honestdamage:immune",
+                    "effect give @p minecraft:resistance 1 4 true", "damage @p 2 minecraft:mob_attack");
+            immune.expect(immune.health == 20, "the hit should take nothing (health stays 20)");
+            immune.expect(immune.maxHurtTime == 0, "the immune hit should not flash");
+            immune.expect(!immune.sounds.contains(HURT), "the immune hit should not play the hurt sound");
+            immune.expect(!immune.sounds.contains(DING), "the immune hit should not ding");
+
             // Station "honestdamage:feather_fall": a 4.5-block drop, Feather Falling leaves under a half heart.
             JsonArray o = scene.station("honestdamage:feather_fall").getAsJsonArray("origin");
             String drop = "tp @p " + (o.get(0).getAsInt() + 0.5) + " " + (o.get(1).getAsInt() + 4.5) + " " + (o.get(2).getAsInt() + 1.5);
@@ -47,8 +60,21 @@ public class HitChecks implements FabricClientGameTest {
             fall.expect(fall.health < 20, "the fall should land (health below 20)");
             fall.expect(fall.maxHurtTime == 0, "the cushioned fall should not flash");
             fall.expect(!fall.sounds.contains(HURT), "the cushioned fall should not play the hurt sound");
-            fall.expect(!fall.sounds.contains(DING), "fall damage doesn't wear armor, so no ding");
+            fall.expect(fall.sounds.contains(DING), "the fall took health without moving a heart, so a ding");
         }
+    }
+
+    /**
+     * The sound engine loads in the background and drops every sound until it's up, so the
+     * first check could miss its ding. Play a click until the listener hears one.
+     */
+    private static void soundReady(ClientGameTestContext ctx, List<String> heard) {
+        for (int t = 0; t < 200 && !heard.contains(PROBE); t += 5) {
+            ctx.runOnClient(c -> c.getSoundManager().play(
+                    SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1F)));
+            ctx.waitTicks(5);
+        }
+        if (!heard.contains(PROBE)) throw new AssertionError("the sound engine never came up");
     }
 
     /** What the client showed for one hit. */
@@ -59,14 +85,14 @@ public class HitChecks implements FabricClientGameTest {
         }
     }
 
-    /** Full health, out of the damage cooldown, at the station; then the hit, watched for 40 ticks. */
-    private static Hit hit(ClientGameTestContext ctx, SceneWorld.Opened scene, List<String> heard, String check, String command) {
+    /** Full health, out of the damage cooldown, at the station; then the hit's commands, watched for 40 ticks. */
+    private static Hit hit(ClientGameTestContext ctx, SceneWorld.Opened scene, List<String> heard, String check, String... commands) {
         JsonObject station = scene.station(check);
         scene.standAt(station, 0);
         scene.world().getServer().runCommand("effect give @p minecraft:instant_health 1 4 true");
         ctx.waitTicks(30);
         heard.clear();
-        scene.world().getServer().runCommand(command);
+        for (String command : commands) scene.world().getServer().runCommand(command);
         int maxHurt = 0;
         float health = 20;   // the lowest seen: natural regeneration soon heals a light hit back
         for (int t = 0; t < 40; t++) {
