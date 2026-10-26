@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "honestdamage",
+  "version": "${version}",
+  "name": "Honest Damage",
+  "description": "The hurt sound, red flash and screen shake play only when a hit actually hurts you. When your armor takes the whole hit, you hear a small ding instead.",
+  "authors": [
+    "trevorschoeny"
+  ],
+  "contact": {
+    "sources": "https://github.com/trevorschoeny/honest-damage"
+  },
+  "license": "MIT",
+  "environment": "client",
+  "mixins": [
+    "honestdamage.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "minecraft": "~26.3"
+  }
+}
