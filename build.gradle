@@ -100,7 +100,7 @@ processResources {
 // here. Only Lead runs these tasks.
 modrinth {
     token = System.getenv("MODRINTH_TOKEN")
-    projectId = ""   // no project yet: created when Trev approves the first release
+    projectId = "lQ9z2bmA"
     versionNumber = property('honestdamage_version')
     versionName = "Honest Damage ${property('honestdamage_version')}"
     versionType = "release"
